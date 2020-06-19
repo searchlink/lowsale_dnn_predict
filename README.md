@@ -15,7 +15,7 @@
 2）基于dnn的预测，目前在30天的预测上表现比较好；由于数据是按天整理的销量数据和相应的特征，使用一天或者少数几天的数据进行训练，泛化能力比较欠缺，
 分析原因，在于样本分布的差异，目前使用更多天数的数据进行训练，预测效果有了显著提升。
 
-目前提供低阶的tensrflow api来进行长尾数据的训练和预测，tensorflow==1.13， 包含如下：
+目前提供低阶的tensrflow api来进行长尾数据的训练和预测，tensorflow==1.13， 包含如下：                             
 1）由于要使用tensorboard， 因此tf.summary.FileWriter的使用方法， 启动方式                   
 `tensorboard --logdir=./tmp/`                      
 2）模型的保存，使用tf.train.Saver            
