@@ -1,4 +1,4 @@
-# lowsale_dnn_predict-
+# lowsale_dnn_predict
 长尾商品销量DNN预测
 
 长尾商品的预测是一个难题，目前尝试了很多方法。
