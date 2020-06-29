@@ -1,7 +1,10 @@
-# 长尾商品销量DNN预测
+# lowsale_dnn_predict-
+长尾商品销量DNN预测
 
 长尾商品的预测是一个难题，目前尝试了很多方法。
-这里只考虑7天、30天的预测，来服务于供应链系统的备货。
+这里只考虑7天、30天的预测和60天的预测，来服务于供应链系统的备货。
+
+## 1. 考虑单输出，如7天预测一个模型，30天预测一个模型
 - 基于单纯的销量，possion分布在7天预测上的表现还可以，不过有相应的前提条件。     
 1） 销量数据不能超过一定阀值，否则possion分布预测失效   
 2） 需要check下哪段范围内的销量均值作为lambda的取值，否则预测出来的值就不准确
@@ -14,7 +17,7 @@
 2）基于dnn的预测，目前在30天的预测上表现比较好；由于数据是按天整理的销量数据和相应的特征，使用一天或者少数几天的数据进行训练，泛化能力比较欠缺，
 分析原因，在于样本分布的差异，目前使用更多天数的数据进行训练，预测效果有了显著提升。
 
-目前提供低阶的tensrflow api来进行长尾数据的训练和预测，tensorflow==1.13， 包含如下：                             
+目前提供低阶的tensrflow api来进行长尾数据的训练和预测，tensorflow==1.13， 包含如下：
 1）由于要使用tensorboard， 因此tf.summary.FileWriter的使用方法， 启动方式                   
 `tensorboard --logdir=./tmp/`                      
 2）模型的保存，使用tf.train.Saver            
@@ -26,11 +29,26 @@
 则可以认为精度不再提高了。               
 5）关于离线模型的加载和预测，使用tf.train.import_meta_graph和graph.get_operation_by_name来进行预测
 
+## 2. 考虑多输出，一个模型同时优化7天预测、30天预测和60天预测：        
+核心代码如下：  
+```
+    _ = keras.layers.Dense(num_units[2], activation='relu')(drop3)
+    week_predict = keras.layers.Dense(output_size, name="week_predict")(_)
+    _ = keras.layers.Dense(num_units[2], activation='relu')(drop3)
+    month_predict = keras.layers.Dense(output_size, name="month_predict")(_)
+    _ = keras.layers.Dense(num_units[2], activation='relu')(drop3)
+    two_month_predict = keras.layers.Dense(output_size, name="two_month_predict")(_)
 
+    model = keras.models.Model(inputs=[input_x], outputs=[week_predict, month_predict, two_month_predict])
 
+    model.compile(
+        optimizer=keras.optimizers.Adam(lr=0.001, beta_1=0.9, beta_2=0.999, epsilon=None, decay=0.0, amsgrad=False),
+        loss={'week_predict': 'mae', 'month_predict': 'mae', 'two_month_predict': 'mae'},
+        loss_weights={'week_predict': 4., 'month_predict': 2, 'two_month_predict': 1.},
+        metrics={'week_predict': root_mean_squared_error,
+                 'month_predict': root_mean_squared_error,
+                 'two_month_predict': root_mean_squared_error}
+        )
+```
 
-
-
-
-
- 
+目前线上使用的是多输出的预测，效果显著！
